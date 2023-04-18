@@ -49,7 +49,7 @@ function Filme(){
         const hasFilme = filmesSalvos.some((filmesSalvos) => filmesSalvos.id === filme.id);
 
         if(hasFilme){
-            toast.warn("Esse filme já esta na sua lita");
+            toast.warn("Esse filme já esta na sua lista");
             return;
         }
 
@@ -82,8 +82,8 @@ function Filme(){
 
            <h3>Sinopse</h3>
            <span>{filme.overview}</span>
-
-           <strong>Avaliação: {filme.vote_average} / 10</strong>
+            <br></br>
+           <strong>Avaliação: {filme.vote_average} / 10</strong> <br></br>
            <strong>Votos: {filme.vote_count} </strong>
 
 

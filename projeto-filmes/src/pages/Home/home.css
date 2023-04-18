@@ -1,5 +1,9 @@
+body {
+    background-image: url('imgg/depositphotos_286856426-stock-photo-cinema-concept-of-vintage-film.jpg');
+    width: 100%;
+}
 .Lista-filmes{
-    max-width: 800px;
+    max-width: 350px;
     margin: 14px auto;
     
 
@@ -15,11 +19,14 @@
 .Lista-filmes {
     
    
-    margin-top: 14px;
+    margin-top: 1px;
     width: 100%;
     background-color: #fff;
     padding: 15px;
     border-radius: 4px;
+    
+    background-color: #a9a9a9;
+    
 
 }
 
@@ -30,9 +37,13 @@
     font-size: 22px;
     display: block;
     margin: 15px auto;
+    
+    
+    
 }
 
 .Lista-filmes img{
+    
     margin: 0 auto;
     width: 350px;
     max-width: 100%;

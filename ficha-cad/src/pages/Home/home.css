@@ -1,0 +1,65 @@
+.home-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    
+}
+
+.home-container h1{
+    font-size: 48px;
+    margin-bottom: 8px;
+
+}
+.home-container span{
+    margin-bottom: 28px;
+
+}
+
+.form{
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    max-width: 600px;
+}
+.form input{
+    border: 0;
+    margin-bottom: 12px;
+    height: 36px;
+    border-radius: 4px;
+    padding: 0 8px;
+}
+
+.mx-auto {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.p-button {
+    
+    
+    height: 50px;
+    
+}
+    
+    
+    
+
+.form textarea {
+    margin-bottom: 12px;
+    border: 0;
+    height: 90px;
+    resize: none;
+    border-radius: 4px;
+    
+    
+}
+
+.button-link{
+    color: white;
+    text-decoration: none;
+    margin: 14px 0; 
+    font-size: 15px;
+}

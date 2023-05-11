@@ -30,11 +30,7 @@ export default function Header(){
            </Link> 
 
            
-           <Link to="/">
-            <FiSettings color="#fff" size={24}/>
-            Logout
-           </Link> 
-  
+           
 
         </div>
     )

@@ -1,7 +1,7 @@
 
 import {useState,createContext,useEffect} from "react";
 import {auth,db} from '../services/firebaseConnection'
-import {createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from 'firebase/auth' // criar e logar usuario
+import {createUserWithEmailAndPassword,signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut} from 'firebase/auth' // criar e logar usuario
 import {doc, getDoc, setDoc} from 'firebase/firestore'
 
 
@@ -50,6 +50,36 @@ export const AuthContext = createContext({});
 
 
     }
+
+    async function signInWithGoogle() {
+      setLoadingAuth(true);
+      signInWithPopup(auth, new GoogleAuthProvider())
+          .then(async (value) => {
+              const user = value.user;
+              const userData = {
+                  'id': user.uid,
+                  'name': user.displayName,
+                  'avatarUrl': user.photoURL,
+                  'email': user.email,
+              };
+
+              await setDoc(doc(db, "users", user.uid), userData)
+                  .then(() => {
+                      setUser(userData);
+                      storageUser(userData);
+                      toast.success("Bem vindo(a) de volta!")
+                      navigator('/dashboard');
+                  });
+          }).catch((error) => {
+        console.log(error);
+        setLoadingAuth(false);
+      })
+  }
+
+
+
+    
+
 
     // Cadrastar um novo usuario
    async function signup(email,password,name){
@@ -105,6 +135,7 @@ export const AuthContext = createContext({});
         signed: !!user,
         user,
         signIn,
+        signInWithGoogle,
         signup,
         logout,
         loadingAuth,

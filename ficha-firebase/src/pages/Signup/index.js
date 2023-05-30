@@ -6,11 +6,14 @@ import { Link } from 'react-router-dom'
 
 import {AuthContext} from '../../contexts/auth' 
 
+import { toast } from 'react-toastify'
+
 export default  function Sigunp(){
 
     const [name,setName] = useState('')
     const [email,setEmail]  = useState('');
     const [password,setPassword] = useState('');
+    const [confirmpass,setCofirm] = useState('');
 
     const {signup,loadingAuth} = useContext(AuthContext);
 
@@ -20,9 +23,26 @@ export default  function Sigunp(){
      async function handleSubmit(e){
         e.preventDefault();
 
-        if(name !== '' && email !== '' && password !== ''){
-         await   signup(email,password,name)
-        }
+        if  (password === confirmpass){
+            await   signup(email,password,name,confirmpass)
+            
+        }     
+         else {
+            toast.error("As senhas não são iguais")
+         }
+       
+
+          if(name !== '' && email !== ''){
+           
+            await  signup(email,password,name,confirmpass)
+           } 
+        else {
+        toast.error("Preencha todos os campos!")
+            } 
+
+            
+        
+          
 
     }
 
@@ -35,7 +55,7 @@ return(
         
 
         <form onSubmit={handleSubmit}>
-            <h1>Cadrastrar</h1>
+            <h1>Cadastrar</h1>
 
             <input
              type='text'  
@@ -58,9 +78,16 @@ return(
              onChange={(e)=> setPassword(e.target.value) }
             />
 
+            <input
+             type='password'  
+             placeholder='confirmar a senha' 
+             value={confirmpass}
+             onChange={(e)=> setCofirm(e.target.value) }
+            />
+
             
          <button type='submit'>
-            {loadingAuth ? 'Carregando....' : 'Cadrastar'}
+            {loadingAuth ? 'Carregando....' : 'Cadastrar'}
          </button>
 
         </form>

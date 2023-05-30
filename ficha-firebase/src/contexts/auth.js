@@ -106,8 +106,8 @@ export const AuthContext = createContext({});
            setUser(data);
            storageUser(data);
             setLoadingAuth(false);
-            toast.success("Seja bem vindo ao sistema!")
-            navigate("/dashboard")
+            //toast.success("Seja bem vindo ao sistema!")
+            navigate("/")
           })
 
 

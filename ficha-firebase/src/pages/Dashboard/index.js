@@ -1,10 +1,9 @@
 import { useContext } from 'react'
 import React, { useState, useEffect } from 'react';
 import { AuthContext } from '../../contexts/auth'
-import Title from '../../components/Title'
+
 import './dashboard.css'
-import { FiPlus, FiMessageSquare, FiSearch, FiEdit2 } from 'react-icons/fi'
-import { Link } from 'react-router-dom'
+//import { Link } from 'react-router-dom'
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -14,22 +13,28 @@ import "primereact/resources/primereact.min.css";
 import { db } from '../../services/firebaseConnection'
 import { addDoc, collection, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore'
 import { toast } from 'react-toastify'
-import { FiUser } from 'react-icons/fi'
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { InputText } from 'primereact/inputtext';
 import { InputMask } from 'primereact/inputmask';
-import { InputSwitch } from 'primereact/inputswitch';
+import { Calendar } from 'primereact/calendar';
+//import { Slider } from 'primereact/slider';
+//import { Tag } from 'primereact/tag';
+//import { DateToString, StringToDate } from '../../ults/DateUtils';
+import *as Yup from 'yup'
+import CPF from 'cpf'
+import { Toast } from 'primereact/toast';
+//import { DateToString, StringToDate } from '../../ults/DateUtils';
 
-import ValidateCPF from '../../ults/ValidateCPF';
+
 
 import Header from '../../components/Header';
+
 
 export default function Dashboard() {
     const [users, setUsers] = useState([]);
     const { logout } = useContext(AuthContext);
     const [visible, setVisible] = useState(false);
     const [editando, setEditando] = useState(false);
-    const [globalFilterValue, setGlobalFilterValue] = useState('');
     const [id, setId] = useState();
     const [nome, setNome] = useState();
     const [data, setData] = useState();
@@ -40,26 +45,16 @@ export default function Dashboard() {
     const [bairro, setBairro] = useState();
     const [localidade,setLocalidade] = useState();
     const [uf,setUf] = useState();
+    const [numero,setNumero] = useState();
     const [complemento,setComplemento] = useState();
     const [genero,setGenero] = useState();
+    const [selectedCustomer, setSelectedCustomer] = useState({});
+    const [filters, setFilters] = useState(null);
+    const [globalFilterValue, setGlobalFilterValue] = useState('');
+    const [customGender, setCustomGender] = useState('');
+    
 
-    const [filters, setFilters] = useState({
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        nome: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        data: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        telefone: { value: null, matchMode: FilterMatchMode.CONTAINS },
-
-
-    });
-    const onGlobalFilterChange = (e) => {
-        const value = e.target.value;
-        let _filters = { ...filters };
-
-        _filters['global'].value = value;
-
-        setFilters(_filters);
-        setGlobalFilterValue(value);
-    };
+    
 
     useEffect(() => {
         async function getCustomers() {
@@ -78,6 +73,7 @@ export default function Dashboard() {
                         'bairro': doc.data().bairro,
                         'localidade':doc.data().localidade,
                         'uf':doc.data().uf,
+                        'numero':doc.data().numero,
                         'complemento':doc.data().complemento,
                         'genero': doc.data().genero,
 
@@ -90,6 +86,7 @@ export default function Dashboard() {
         }
 
         getCustomers();
+        initFilters();
     }, []);
 
     async function handleSearch(e) {
@@ -101,12 +98,13 @@ export default function Dashboard() {
             setBairro(data.bairro);
             setLocalidade(data.localidade);
             setUf(data.uf);
+            setNumero(data.numero);
             setComplemento(data.complemento);
         
 
            
         } catch (error) {
-           alert('não existe esse cep')
+           //alert('não existe esse cep')
                         setCep('');
                         setRua('');
                         setBairro('');
@@ -120,9 +118,16 @@ export default function Dashboard() {
     async function handleRegister(e) {
         e.preventDefault();
 
-        if (id) {
-            const docRef = doc(db, "customers", id)
-            await updateDoc(docRef, {
+         const userSchema = Yup.object({
+            nome: Yup.string().min(9,"Nome deve ter sobrenome"),
+            telefone: Yup.string().min(11,"O telefone deve ter 11 numeros"),
+            //data:Yup.date().min(new Date("1905-01-01"),"A data minima é 01/01/1905"),
+            cpf: Yup.string().test((cpf)=>CPF.isValid(cpf)),
+        })
+        
+
+        try {
+            const user = await userSchema.validate({
                 nome: nome,
                 data: data,
                 telefone: telefone,
@@ -132,68 +137,78 @@ export default function Dashboard() {
                 bairro:bairro,
                 localidade:localidade,
                 uf:uf,
+                numero:numero,
                 complemento:complemento,
                 genero:genero,
-
-            })
-                .then(() => {
-                    setEditando(false);
-                    setVisible(false);
-                    toast.success("Usuario editado");
-                })
-                .catch((error) => {
-                    setEditando(false);
-                    setVisible(false);
-                    toast.error("algo deu errado");
-                })
-        } else {
-            if (nome !== '' && data !== '' && telefone !== '' && cpf !== '' && cep !== '' && rua !== '' && bairro !== '' && localidade !== '' && uf !== '' ) {
-                await addDoc(collection(db, "customers"), {
-                    nome: nome,
-                    data: data,
-                    telefone: telefone,
-                    cpf: cpf,
-                    cep: cep,
-                    rua: rua,
-                    bairro:bairro,
-                    localidade:localidade,
-                    uf:uf,
-                    complemento:complemento,
-                    genero:genero,
-                })
+        })
+            if (id) {
+                const docRef = doc(db, "customers", id)
+                await updateDoc(docRef, user)          
                     .then(() => {
-                        setNome('');
-                        setData('');
-                        setTelefone('');
-                        setCpf('');
-                        setCep('');
-                        setRua('');
-                        setBairro('');
-                        setLocalidade('');
-                        setUf('');
-                        setComplemento('');
-                        setGenero('');
-                        setVisible(false); /// quando cadastrar fecha o dialog
-                        toast.success("Usuario registrado")
+    
+                        setEditando(false);
+                        setVisible(false);
+                        toast.success("Usuario editado");
                     })
                     .catch((error) => {
-                        setNome('');
-                        setData('');
-                        setTelefone('');
-                        setCpf('');
-                        setCep('');
-                        setRua('');
-                        setBairro('');
-                        setLocalidade('');
-                        setUf('');
-                        setComplemento('');
-                        setGenero('');
-                        console.log(error)
-                        toast.error("Erro ao fazer o cadastro")
+                        setEditando(false);
+                        setVisible(false);
+                        toast.error("algo deu errado");
                     })
             } else {
-                toast.error("Preencha todos os campos!")
+                if (nome !== '' && data !== '' && telefone !== '' && cpf !== '' && cep !== '' && rua !== '' && bairro !== '' && localidade !== '' && uf !== ''  && numero !== '' ) {
+                    await addDoc(collection(db, "customers"), {
+                        nome: nome,
+                        data: data,
+                        telefone: telefone,
+                        cpf: cpf,
+                        cep: cep,
+                        rua: rua,
+                        bairro:bairro,
+                        localidade:localidade,
+                        uf:uf,
+                        numero:numero,
+                        complemento:complemento,
+                        genero:genero,
+                    })
+                        .then(() => {
+                            setNome('');
+                            setData('');
+                            setTelefone('');
+                            setCpf('');
+                            setCep('');
+                            setRua('');
+                            setBairro('');
+                            setLocalidade('');
+                            setUf('');
+                            setNumero('');
+                            setComplemento('');
+                            setGenero('');
+                            setVisible(false); /// quando cadastrar fecha o dialog
+                            toast.success("Usuario registrado")
+                        })
+                        .catch((error) => {
+                            setNome('');
+                            setData('');
+                            setTelefone('');
+                            setCpf('');
+                            setCep('');
+                            setRua('');
+                            setBairro('');
+                            setLocalidade('');
+                            setUf('');
+                            setNumero('');
+                            setComplemento('');
+                            setGenero('');
+                            console.log(error)
+                            toast.error("Erro ao fazer o cadastro")
+                        })
+                } else {
+                    toast.error("Preencha todos os campos!")
+                }
             }
+        } catch (error) {
+            alert(error.message)
         }
     }
 
@@ -209,6 +224,7 @@ export default function Dashboard() {
         setBairro(customer.bairro)
         setLocalidade(customer.localidade)
         setUf(customer.uf)
+        setNumero(customer.numero)
         setComplemento(customer.complemento)
         setGenero(customer.genero)
         setVisible(true);
@@ -224,6 +240,7 @@ export default function Dashboard() {
         setBairro('');
         setLocalidade('');
         setUf('');
+        setNumero('');
         setComplemento('');
         setGenero('');
         
@@ -231,9 +248,7 @@ export default function Dashboard() {
         setVisible(false);
     }
 
-    async function handleLogout() {
-        await logout();
-    }
+    
     async function deleteTarefa(id) {
         const docRef = doc(db, "customers", id)
         await deleteDoc(docRef);
@@ -251,38 +266,167 @@ export default function Dashboard() {
         )
     }
 
-    const renderHeader = () => {
+    const clearFilter = () => {
+        initFilters();
+    };
+
+    const onGlobalFilterChange = (e) => {
+        const value = e.target.value;
+        let _filters = { ...filters };
+        filters["global"].value = value;
+
+        setFilters(_filters);
+        setGlobalFilterValue(value);
+    };
+
+    const initFilters = () => {
+        setFilters({
+            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+            nome: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            telefone: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            data: {
+                operator: FilterOperator.AND,
+                label: '',
+                constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }]
+            },
+            
+        });
+        setGlobalFilterValue("");
+    };
+
+    const renderFilterHeader = () => {
         return (
-            <div className="flex justify-content-end">
+            <div className="flex justify-content-between">
+                <Button
+                    type="button"
+                    icon="pi pi-filter-slash"
+                    label="Limpar"
+                    className="p-button-outlined btn-secondary"
+                    onClick={clearFilter}
+                />
                 <span className="p-input-icon-left">
                     <i className="pi pi-search" />
-                    <InputText value={globalFilterValue} onChange={onGlobalFilterChange} placeholder="Keyword Search" />
+                    <InputText
+                        value={globalFilterValue}
+                        onChange={onGlobalFilterChange}
+                        placeholder="Pesquisa"
+                    />
                 </span>
             </div>
         );
     };
-    const header = renderHeader();
 
+   // const formatDate = (value) => {
+        //return value.toLocaleDateString("pt-BR", {
+           // day: "2-digit",
+           // month: "2-digit",
+            //year: "numeric",
+        //});
+  // }
+    //const dateBodyTemplate = (rowData) => {
+       //return formatDate(rowData.data);
+    //};
+    
+    const dateemplate = (options) => {
+        return <Calendar value={options.value} onChange={(e) => options.filterCallback(e.value, options.index)} dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" mask="99/99/9999" />;
+    };
+    const dateFilterTemplate = (options) => {
+        return (
+            <Calendar
+                value={options.value}
+                onChange={(e) => options.filterCallback(e.value, options.index)}
+                dateFormat="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                mask="99/99/9999"
+            />
+        );
+    };
+
+
+   
+
+   
+
+    const onRowSelect = (event) => {
+        setSelectedCustomer(event.data);
+    };
+
+    const header = renderFilterHeader();
+
+    
+
+
+
+
+   
+    
     return (
         <div>
             <Header />
             
-
+            <Toast ref={toast} />
             <div className="content">
+
                 
-                
-                    
-               
+                    <div className='flex flex-wrap justify-content-evenly my-5'>
+                        <InputText disabled='true' placeholder='Nome do Cliente' value={selectedCustomer != null ? selectedCustomer.nome : ''} />
+                        <InputText disabled='true' placeholder='Data de Nascimento' value={selectedCustomer != null ? selectedCustomer.data : ''} />
+                        <Button onClick={() => setVisible(true)} className='seila'> Add User </Button>
+                    </div>   
 
                 <div className="card">
-                <Button onClick={() => setVisible(true)} className='seila'> Add User </Button>
-                    <DataTable value={users} paginator rows={10} dataKey="id" filters={filters} filterDisplay="row"
-                    
-                        globalFilterFields={['nome','data','telefone']} header={header} emptyMessage=" Não existe usuario ">
-                        
-                        <Column field="nome" header="Nome" filter filterPlaceholder="Procurar pelo nome" style={{ minWidth: '12rem' }} />
-                        <Column field="data" header="Data" filter filterPlaceholder="Procurar por data" style={{ minWidth: '12rem' }} />
-                        <Column field="telefone" header="Telefone" filter filterPlaceholder="Procurar por telefone" style={{ minWidth: '12rem' }} />
+               
+                
+                <Toast ref={toast} />
+                    <DataTable 
+                    value={users}
+                    className="p-datatable-customers"
+                      paginator rows={10}
+                      rowsPerPageOptions={[3, 5, 10, 25, 50]}
+                      filters={filters}
+                      filterDisplay="menu"
+                      globalFilterFields={["nome", "data", "telefone"]}
+                      header={header}
+                      selectionMode="single"
+                      selection={selectedCustomer}
+                      onSelectionChange={(e) => setSelectedCustomer(e.value)}
+                      onRowSelect={onRowSelect}
+                      metaKeySelection={false}
+                      emptyMessage="Nenhum cliente encontrado."
+                      stripedRows
+                      removableSort >
+                       
+                        <Column field="nome"
+                         header="Nome"
+                         filter
+                         sortable
+                         filterPlaceholder="Procurar pelo nome"
+                         style={{ minWidth: '12rem' }}
+                          />
+                        <Column
+                         field="data"
+                          header="Data" 
+                          filter
+                          sortable
+                           filterPlaceholder="Procurar por data"
+                           mask="99/99/9999"
+                           //filterElement={dateFilterTemplate}
+                           //body={dateBodyTemplate}
+                            style={{ minWidth: '12rem' }}
+                             />
+                        <Column
+                         field="telefone"
+                          header="Telefone"
+                           filter
+                           sortable
+                            filterPlaceholder="Procurar por telefone"
+                             style={{ minWidth: '12rem' }} />
                         <Column header="action" body={buttons} />
                         
                         
@@ -308,17 +452,25 @@ export default function Dashboard() {
 
                             <label>Gênero:</label>
                             <select  onChange={(e) => setGenero(e.target.value)} value={genero}>
-                            <option value="{masculino}" >Masculino</option>
-                            <option value="{feminino}" >Feminino</option>
-                            <option value="{outro}" >Outro</option>
+                            <option value="masculino" >Masculino</option>
+                            <option value="feminino" >Feminino</option>
+                            <option value="outro" >Outro</option>
                             </select>
+                            {genero === 'outro' ?
+                             <span className="p-float-label my-5">
+                             <InputText id="genero" name='genero' defaultValue={genero} value={customGender} className='w-full' onChange={(e) => setCustomGender(e.target.value)} />
+                            <label htmlFor="genero">Gênero</label>
+                            </span>
+                            : null
+                            }
+
 
 
                             <label>CPF:</label>
                             <InputMask type="text" placeholder='' mask="999.999.999-99" value={cpf} onChange={(e) => setCpf(e.target.value)}   ></InputMask>
 
                             <label>CEP:</label>
-                            <input type="text" placeholder='' name='cep' value={cep} onChange={(e) => setCep(e.target.value)} onBlur={handleSearch} ></input>
+                            <InputMask type="text" placeholder='' name='cep' mask="99999-999" value={cep} onChange={(e) => setCep(e.target.value)} onBlur={handleSearch} ></InputMask>
 
 
                             <label>Rua:</label>
@@ -329,6 +481,9 @@ export default function Dashboard() {
 
                             <label>Estado:</label>
                             <input type="text" placeholder='' name='uf' value={uf} onChange={(e) => setUf(e.target.value)}></input>
+
+                            <label>Numero:</label>
+                            <input type="text" placeholder='' name='numero' value={numero} onChange={(e) => setNumero(e.target.value)}></input>
 
                             <label>Complemento:</label>
                             <input type="text" placeholder='' name='complemento' value={complemento} onChange={(e) => setComplemento(e.target.value)}></input>

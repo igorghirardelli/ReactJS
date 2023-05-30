@@ -3,7 +3,7 @@ import './signin.css'
 //import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 
-
+import { toast } from 'react-toastify'
 
 import logo from '../../assets/gato-preto-2.jpg'
 import { Link } from 'react-router-dom'
@@ -23,6 +23,9 @@ export default  function Signin(){
         if(email !== '' && password !== '' ){
           await  signIn(email,password);
         }
+        else {
+            toast.error("Preencha todos os campos!")
+                } 
     }
     async function handleSignInWithGoogle() {
         await signInWithGoogle().catch((err) => {
